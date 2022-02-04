@@ -6,9 +6,10 @@ pub fn main() anyerror!void {
 
     var args = try std.process.argsWithAllocator(arena.allocator());
     _ = args.skip();
-    const filename = args.next(arena.allocator());
+    const filename = try args.next(arena.allocator()) orelse unreachable;
+    const data = try std.fs.cwd().readFileAlloc(arena.allocator(), filename, 1000);
 
-    std.debug.print("filename: {s}\n", .{@TypeOf(filename)});
+    std.debug.print("{s}", .{data});
 }
 
 test "basic test" {
