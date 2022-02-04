@@ -9,7 +9,12 @@ pub fn main() anyerror!void {
     const filename = try args.next(arena.allocator()) orelse unreachable;
     const data = try std.fs.cwd().readFileAlloc(arena.allocator(), filename, 1000);
 
-    std.debug.print("{s}", .{data});
+    const view = try std.unicode.Utf8View.init(data);
+    var iter = view.iterator();
+
+    const a = iter.nextCodepointSlice() orelse unreachable;
+
+    std.debug.print("{s}", .{a});
 }
 
 test "basic test" {
