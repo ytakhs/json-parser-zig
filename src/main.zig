@@ -11,9 +11,14 @@ pub fn main() anyerror!void {
     const data = try std.fs.cwd().readFileAlloc(arena.allocator(), filename, 1000);
 
     var lexer = try Lexer.init(arena.allocator(), data);
+    var alloc = arena.allocator();
 
     while (lexer.next()) |val| {
-        std.debug.print("{s}", .{val});
+        const size = std.unicode.utf8CodepointSequenceLength(val) catch unreachable;
+        var buf = try alloc.alloc(u8, size);
+        _ = std.unicode.utf8Encode(val, buf) catch unreachable;
+
+        std.debug.print("{s}", .{buf});
     }
 }
 
