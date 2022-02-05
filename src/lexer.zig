@@ -1,6 +1,8 @@
 const std = @import("std");
-const Token = @import("token.zig").Token;
 const mem = std.mem;
+const unicode = std.unicode;
+
+const Token = @import("token.zig").Token;
 
 pub const Lexer = struct {
     allocator: std.mem.Allocator,
@@ -25,21 +27,27 @@ pub const Lexer = struct {
     }
 
     fn skipWhitespace(self: *Self) void {
-        while (true) {
-            const peek = self.iter.peek(1);
-
-            if (mem.eql(u8, peek, " ")) {
-                _ = self.nextCodepointSlice();
-            } else if (mem.eql(u8, peek, "\n")) {
-                _ = self.nextCodepointSlice();
-            } else if (mem.eql(u8, peek, "\r")) {
-                _ = self.nextCodepointSlice();
-            } else if (mem.eql(u8, peek, "\t")) {
-                _ = self.nextCodepointSlice();
-            } else {
-                break;
+        while (self.peekCodepoint()) |cp| {
+            switch (cp) {
+                '\u{0020}', '\r', '\n', '\t' => {
+                    _ = self.nextCodepointSlice();
+                },
+                else => break,
             }
         }
+    }
+
+    fn peekCodepoint(self: *Self) ?u21 {
+        const pk = self.peek(1);
+        if (mem.eql(u8, pk, "")) {
+            return null;
+        }
+
+        return unicode.utf8Decode(pk) catch unreachable;
+    }
+
+    fn peek(self: *Self, n: u64) []const u8 {
+        return self.iter.peek(n);
     }
 
     fn nextCodepointSlice(self: *Self) ?[]const u8 {
