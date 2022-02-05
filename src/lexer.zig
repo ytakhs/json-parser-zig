@@ -38,10 +38,7 @@ pub const Lexer = struct {
                 // t
                 '\u{0074}' => {
                     if (mem.eql(u8, self.peek(4), "true")) {
-                        _ = self.nextCodepoint();
-                        _ = self.nextCodepoint();
-                        _ = self.nextCodepoint();
-                        _ = self.nextCodepoint();
+                        self.skip(4);
 
                         return Token.True;
                     } else {
@@ -51,11 +48,7 @@ pub const Lexer = struct {
                 // f
                 '\u{0066}' => {
                     if (mem.eql(u8, self.peek(5), "false")) {
-                        _ = self.nextCodepoint();
-                        _ = self.nextCodepoint();
-                        _ = self.nextCodepoint();
-                        _ = self.nextCodepoint();
-                        _ = self.nextCodepoint();
+                        self.skip(5);
 
                         return Token.False;
                     } else {
@@ -65,10 +58,7 @@ pub const Lexer = struct {
                 // n
                 '\u{006e}' => {
                     if (mem.eql(u8, self.peek(4), "null")) {
-                        _ = self.nextCodepoint();
-                        _ = self.nextCodepoint();
-                        _ = self.nextCodepoint();
-                        _ = self.nextCodepoint();
+                        self.skip(4);
 
                         return Token.Null;
                     } else {
@@ -125,6 +115,13 @@ pub const Lexer = struct {
 
     fn peek(self: *Self, n: u64) []const u8 {
         return self.iter.peek(n);
+    }
+
+    fn skip(self: *Self, n: usize) void {
+        var i: usize = 0;
+        while (i < n) : (i += 1) {
+            _ = self.nextCodepointSlice();
+        }
     }
 
     fn nextCodepointSlice(self: *Self) ?[]const u8 {

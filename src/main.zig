@@ -12,7 +12,7 @@ pub fn main() anyerror!void {
 
     var lexer = try Lexer.init(arena.allocator(), data);
     while (try lexer.next()) |val| {
-        std.debug.print("{s}\n", .{@TypeOf(val)});
+        std.debug.print("{s}.{s}\n", .{ @TypeOf(val), @tagName(val) });
     }
 }
 
