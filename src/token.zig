@@ -9,6 +9,10 @@ pub const Token = union(enum) {
     Null,
     True,
     False,
-    Number: struct {},
-    String: struct {},
+    Number: struct {
+        value: f64,
+    },
+    String: struct {
+        value: []u8,
+    },
 };

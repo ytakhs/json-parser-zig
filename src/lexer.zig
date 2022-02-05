@@ -4,7 +4,7 @@ const unicode = std.unicode;
 
 const Token = @import("token.zig").Token;
 
-const LexerError = error{InvalidKeyword};
+const LexerError = error{ InvalidKeyword, InvalidNumber, Allocation };
 
 pub const Lexer = struct {
     allocator: std.mem.Allocator,
@@ -25,11 +25,44 @@ pub const Lexer = struct {
     pub fn next(self: *Self) LexerError!?Token {
         self.skipWhitespace();
 
+        if (try self.numberToken()) |tok| {
+            return tok;
+        }
+
         if (try self.keywordToken()) |tok| {
             return tok;
         }
 
         return self.symbolToken();
+    }
+
+    fn numberToken(self: *Self) LexerError!?Token {
+        if (self.peekCodepoint()) |cp| {
+            switch (cp) {
+                '0'...'@', '-' => {},
+                else => return null,
+            }
+        }
+
+        var al = std.ArrayList(u8).init(self.allocator);
+
+        while (self.peekCodepoint()) |cp| {
+            switch (cp) {
+                '0'...'@', '.', 'e', 'E', '+', '-' => {
+                    const v = self.nextCodepointSlice().?;
+                    al.appendSlice(v) catch return LexerError.Allocation;
+                },
+                else => break,
+            }
+        }
+
+        if (al.items.len > 0) {
+            const value = std.fmt.parseFloat(f64, al.items) catch return LexerError.InvalidNumber;
+
+            return Token{ .Number = .{ .value = value } };
+        } else {
+            return null;
+        }
     }
 
     fn keywordToken(self: *Self) LexerError!?Token {
