@@ -18,10 +18,10 @@ pub const Lexer = struct {
         };
     }
 
-    pub fn next(self: *Self) ?u21 {
+    pub fn next(self: *Self) ?[]const u8 {
         self.skipWhitespace();
 
-        return self.nextCodepoint();
+        return self.nextCodepointSlice();
     }
 
     fn skipWhitespace(self: *Self) void {
@@ -29,20 +29,20 @@ pub const Lexer = struct {
             const peek = self.iter.peek(1);
 
             if (mem.eql(u8, peek, " ")) {
-                _ = self.nextCodepoint();
+                _ = self.nextCodepointSlice();
             } else if (mem.eql(u8, peek, "\n")) {
-                _ = self.nextCodepoint();
+                _ = self.nextCodepointSlice();
             } else if (mem.eql(u8, peek, "\r")) {
-                _ = self.nextCodepoint();
+                _ = self.nextCodepointSlice();
             } else if (mem.eql(u8, peek, "\t")) {
-                _ = self.nextCodepoint();
+                _ = self.nextCodepointSlice();
             } else {
                 break;
             }
         }
     }
 
-    fn nextCodepoint(self: *Self) ?u21 {
-        return self.iter.nextCodepoint();
+    fn nextCodepointSlice(self: *Self) ?[]const u8 {
+        return self.iter.nextCodepointSlice();
     }
 };
