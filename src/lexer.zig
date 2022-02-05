@@ -4,6 +4,8 @@ const unicode = std.unicode;
 
 const Token = @import("token.zig").Token;
 
+const LexerError = error{InvalidKeyword};
+
 pub const Lexer = struct {
     allocator: std.mem.Allocator,
     iter: std.unicode.Utf8Iterator,
@@ -20,10 +22,64 @@ pub const Lexer = struct {
         };
     }
 
-    pub fn next(self: *Self) ?Token {
+    pub fn next(self: *Self) LexerError!?Token {
         self.skipWhitespace();
 
+        if (try self.keywordToken()) |tok| {
+            return tok;
+        }
+
         return self.symbolToken();
+    }
+
+    fn keywordToken(self: *Self) LexerError!?Token {
+        if (self.peekCodepoint()) |cp| {
+            switch (cp) {
+                // t
+                '\u{0074}' => {
+                    if (mem.eql(u8, self.peek(4), "true")) {
+                        _ = self.nextCodepoint();
+                        _ = self.nextCodepoint();
+                        _ = self.nextCodepoint();
+                        _ = self.nextCodepoint();
+
+                        return Token.True;
+                    } else {
+                        return LexerError.InvalidKeyword;
+                    }
+                },
+                // f
+                '\u{0066}' => {
+                    if (mem.eql(u8, self.peek(5), "false")) {
+                        _ = self.nextCodepoint();
+                        _ = self.nextCodepoint();
+                        _ = self.nextCodepoint();
+                        _ = self.nextCodepoint();
+                        _ = self.nextCodepoint();
+
+                        return Token.False;
+                    } else {
+                        return LexerError.InvalidKeyword;
+                    }
+                },
+                // n
+                '\u{006e}' => {
+                    if (mem.eql(u8, self.peek(4), "null")) {
+                        _ = self.nextCodepoint();
+                        _ = self.nextCodepoint();
+                        _ = self.nextCodepoint();
+                        _ = self.nextCodepoint();
+
+                        return Token.Null;
+                    } else {
+                        return LexerError.InvalidKeyword;
+                    }
+                },
+                else => return null,
+            }
+        }
+
+        return null;
     }
 
     fn symbolToken(self: *Self) ?Token {

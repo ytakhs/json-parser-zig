@@ -11,8 +11,7 @@ pub fn main() anyerror!void {
     const data = try std.fs.cwd().readFileAlloc(arena.allocator(), filename, 1000);
 
     var lexer = try Lexer.init(arena.allocator(), data);
-
-    while (lexer.next()) |val| {
+    while (try lexer.next()) |val| {
         std.debug.print("{s}\n", .{@TypeOf(val)});
     }
 }
