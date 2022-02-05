@@ -20,10 +20,20 @@ pub const Lexer = struct {
         };
     }
 
-    pub fn next(self: *Self) ?[]const u8 {
+    pub fn next(self: *Self) ?Token {
         self.skipWhitespace();
 
-        return self.nextCodepointSlice();
+        return self.symbolToken();
+    }
+
+    fn symbolToken(self: *Self) ?Token {
+        if (self.nextCodepoint()) |cp| {
+            switch (cp) {
+                else => return null,
+            }
+        } else {
+            return null;
+        }
     }
 
     fn skipWhitespace(self: *Self) void {
@@ -44,6 +54,10 @@ pub const Lexer = struct {
         }
 
         return unicode.utf8Decode(pk) catch unreachable;
+    }
+
+    fn nextCodepoint(self: *Self) ?u21 {
+        return self.iter.nextCodepoint();
     }
 
     fn peek(self: *Self, n: u64) []const u8 {
