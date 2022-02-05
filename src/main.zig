@@ -10,15 +10,11 @@ pub fn main() anyerror!void {
     const filename = try args.next(arena.allocator()).?;
     const data = try std.fs.cwd().readFileAlloc(arena.allocator(), filename, 1000);
 
-    const lexer = Lexer.init(arena.allocator(), data);
-    std.debug.print("{s}\n", .{@TypeOf(lexer)});
+    var lexer = try Lexer.init(arena.allocator(), data);
 
-    const view = try std.unicode.Utf8View.init(data);
-    var iter = view.iterator();
-
-    const a = iter.nextCodepointSlice().?;
-
-    std.debug.print("{s}\n", .{a});
+    while (lexer.next()) |val| {
+        std.debug.print("{s}", .{val});
+    }
 }
 
 test "basic test" {

@@ -1,4 +1,4 @@
-const Token = union(enum) {
+pub const Token = union(enum) {
     LBrace,
     RBrace,
     LBracket,

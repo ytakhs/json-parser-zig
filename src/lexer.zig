@@ -1,15 +1,48 @@
 const std = @import("std");
+const Token = @import("token.zig").Token;
+const mem = std.mem;
 
 pub const Lexer = struct {
     allocator: std.mem.Allocator,
-    bytes: []u8,
+    iter: std.unicode.Utf8Iterator,
 
     const Self = @This();
 
-    pub fn init(allocator: std.mem.Allocator, bytes: []u8) Self {
+    pub fn init(allocator: std.mem.Allocator, bytes: []u8) !Self {
+        const view = try std.unicode.Utf8View.init(bytes);
+        var iter = view.iterator();
+
         return Self{
             .allocator = allocator,
-            .bytes = bytes,
+            .iter = iter,
         };
+    }
+
+    pub fn next(self: *Self) ?[]const u8 {
+        self.skipWhitespace();
+
+        return self.nextCodepointSlice();
+    }
+
+    fn skipWhitespace(self: *Self) void {
+        while (true) {
+            const peek = self.iter.peek(1);
+
+            if (mem.eql(u8, peek, " ")) {
+                _ = self.nextCodepointSlice();
+            } else if (mem.eql(u8, peek, "\n")) {
+                _ = self.nextCodepointSlice();
+            } else if (mem.eql(u8, peek, "\r")) {
+                _ = self.nextCodepointSlice();
+            } else if (mem.eql(u8, peek, "\t")) {
+                _ = self.nextCodepointSlice();
+            } else {
+                break;
+            }
+        }
+    }
+
+    fn nextCodepointSlice(self: *Self) ?[]const u8 {
+        return self.iter.nextCodepointSlice();
     }
 };
