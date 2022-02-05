@@ -4,6 +4,7 @@ pub const Token = union(enum) {
     LBracket,
     RBracket,
     Colon,
+    Comma,
     Period,
     Null,
     True,
