@@ -145,13 +145,13 @@ pub const Lexer = struct {
     fn symbolToken(self: *Self) ?Token {
         if (self.nextCodepoint()) |cp| {
             switch (cp) {
-                '\u{007B}' => return Token.LBracket,
-                '\u{007D}' => return Token.RBracket,
-                '\u{005B}' => return Token.LBrace,
-                '\u{005D}' => return Token.RBrace,
-                '\u{003A}' => return Token.Colon,
-                '\u{002C}' => return Token.Comma,
-                '\u{002E}' => return Token.Period,
+                '[' => return Token.LBracket,
+                ']' => return Token.RBracket,
+                '{' => return Token.LBrace,
+                '}' => return Token.RBrace,
+                ':' => return Token.Colon,
+                ',' => return Token.Comma,
+                '.' => return Token.Period,
                 else => return null,
             }
         } else {
