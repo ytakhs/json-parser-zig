@@ -106,7 +106,7 @@ pub const Lexer = struct {
         if (self.peekCodepoint()) |cp| {
             switch (cp) {
                 // t
-                '\u{0074}' => {
+                't' => {
                     if (mem.eql(u8, self.peek(4), "true")) {
                         self.skip(4);
 
@@ -116,7 +116,7 @@ pub const Lexer = struct {
                     }
                 },
                 // f
-                '\u{0066}' => {
+                'f' => {
                     if (mem.eql(u8, self.peek(5), "false")) {
                         self.skip(5);
 
@@ -126,7 +126,7 @@ pub const Lexer = struct {
                     }
                 },
                 // n
-                '\u{006e}' => {
+                'n' => {
                     if (mem.eql(u8, self.peek(4), "null")) {
                         self.skip(4);
 
