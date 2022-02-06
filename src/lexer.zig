@@ -25,6 +25,10 @@ pub const Lexer = struct {
     pub fn next(self: *Self) LexerError!?Token {
         self.skipWhitespace();
 
+        if (try self.stringToken()) |tok| {
+            return tok;
+        }
+
         if (try self.numberToken()) |tok| {
             return tok;
         }
@@ -34,6 +38,39 @@ pub const Lexer = struct {
         }
 
         return self.symbolToken();
+    }
+
+    fn stringToken(self: *Self) LexerError!?Token {
+        var buf = std.ArrayList(u8).init(self.allocator);
+
+        if (self.peekCodepoint()) |cp| {
+            switch (cp) {
+                '"' => {
+                    self.skip(1);
+
+                    while (self.peekCodepoint()) |cp2| {
+                        switch (cp2) {
+                            '"' => {
+                                self.skip(1);
+                                break;
+                            },
+                            else => {
+                                const v = self.nextCodepointSlice().?;
+
+                                buf.appendSlice(v) catch return LexerError.Allocation;
+                            },
+                        }
+                    }
+                },
+                else => return null,
+            }
+        }
+
+        if (buf.items.len > 0) {
+            return Token{ .String = .{ .value = buf.items } };
+        }
+
+        return null;
     }
 
     fn numberToken(self: *Self) LexerError!?Token {
@@ -60,9 +97,9 @@ pub const Lexer = struct {
             const value = std.fmt.parseFloat(f64, al.items) catch return LexerError.InvalidNumber;
 
             return Token{ .Number = .{ .value = value } };
-        } else {
-            return null;
         }
+
+        return null;
     }
 
     fn keywordToken(self: *Self) LexerError!?Token {
