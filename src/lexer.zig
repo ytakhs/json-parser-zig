@@ -85,7 +85,7 @@ pub const Lexer = struct {
 
         while (self.peekCodepoint()) |cp| {
             switch (cp) {
-                '0'...'@', '.', 'e', 'E', '+', '-' => {
+                '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', 'e', 'E', '+', '-' => {
                     const v = self.nextCodepointSlice().?;
                     al.appendSlice(v) catch return LexerError.Allocation;
                 },
@@ -196,5 +196,31 @@ pub const Lexer = struct {
 
     fn nextCodepointSlice(self: *Self) ?[]const u8 {
         return self.iter.nextCodepointSlice();
+    }
+
+    test {
+        var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+        defer arena.deinit();
+        var str = "[null,false,true,{\"foo\": 10},-1,\"foo\"]".*;
+        var lexer = try Lexer.init(arena.allocator(), @as([]u8, str[0..std.mem.len(str)]));
+
+        var foo = "foo".*;
+        try std.testing.expect((try lexer.next()).? == Token.LBracket);
+        try std.testing.expect((try lexer.next()).? == Token.Null);
+        try std.testing.expect((try lexer.next()).? == Token.Comma);
+        try std.testing.expect((try lexer.next()).? == Token.False);
+        try std.testing.expect((try lexer.next()).? == Token.Comma);
+        try std.testing.expect((try lexer.next()).? == Token.True);
+        try std.testing.expect((try lexer.next()).? == Token.Comma);
+        try std.testing.expect((try lexer.next()).? == Token.LBrace);
+        try std.testing.expect(std.mem.eql(u8, (try lexer.next()).?.String.value, foo[0..foo.len]));
+        try std.testing.expect((try lexer.next()).? == Token.Colon);
+        try std.testing.expect((try lexer.next()).?.Number.value == @as(f64, 10.0));
+        try std.testing.expect((try lexer.next()).? == Token.RBrace);
+        try std.testing.expect((try lexer.next()).? == Token.Comma);
+        try std.testing.expect((try lexer.next()).?.Number.value == @as(f64, -1.0));
+        try std.testing.expect((try lexer.next()).? == Token.Comma);
+        try std.testing.expect(std.mem.eql(u8, (try lexer.next()).?.String.value, foo[0..foo.len]));
+        try std.testing.expect((try lexer.next()).? == Token.RBracket);
     }
 };
