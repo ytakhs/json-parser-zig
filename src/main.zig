@@ -1,5 +1,6 @@
 const std = @import("std");
 const Lexer = @import("lexer.zig").Lexer;
+const Parser = @import("parser.zig").Parser;
 
 pub fn main() anyerror!void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -18,4 +19,5 @@ pub fn main() anyerror!void {
 
 test {
     _ = Lexer;
+    _ = Parser;
 }
