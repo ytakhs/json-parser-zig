@@ -1,7 +1,15 @@
 const std = @import("std");
 const Token = @import("token.zig").Token;
 const Lexer = @import("lexer.zig").Lexer;
-const Value = @import("value.zig").Value;
+const val = @import("value.zig");
+const Value = val.Value;
+const ArrayValue = val.ArrayValue;
+
+pub const ParseError = error{
+    Lexer,
+    Parse,
+    Allocation,
+};
 
 pub const Parser = struct {
     allocator: std.mem.Allocator,
@@ -9,8 +17,8 @@ pub const Parser = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: std.mem.Allocator, bytes: []u8) !Self {
-        var lexer = try Lexer.init(allocator, bytes);
+    pub fn init(allocator: std.mem.Allocator, bytes: []u8) ParseError!Self {
+        var lexer = Lexer.init(allocator, bytes) catch return ParseError.Lexer;
 
         return Self{
             .allocator = allocator,
@@ -18,37 +26,59 @@ pub const Parser = struct {
         };
     }
 
-    pub fn parse(self: *Self) !Value {
-        var tok = (try self.lexer.next()) orelse unreachable;
+    pub fn parse(self: *Self) ParseError!Value {
+        var tok = (self.lexer.next() catch return ParseError.Lexer).?;
 
-        switch (tok) {
+        return self.parseValue(tok);
+    }
+
+    fn parseValue(self: *Self, token: Token) ParseError!Value {
+        _ = self;
+        switch (token) {
             Token.Null => return parseNull(),
             Token.True => return parseTrue(),
             Token.False => return parseFalse(),
             Token.Number => |t| return parseNumber(t.value),
             Token.String => |t| return parseString(t.value),
+            Token.LBracket => {
+                return self.parseArray();
+            },
             else => unreachable,
         }
     }
 
-    pub fn parseNull() Value {
+    fn parseNull() Value {
         return Value.Null;
     }
 
-    pub fn parseTrue() Value {
+    fn parseTrue() Value {
         return Value.True;
     }
 
-    pub fn parseFalse() Value {
+    fn parseFalse() Value {
         return Value.False;
     }
 
-    pub fn parseNumber(value: f64) Value {
+    fn parseNumber(value: f64) Value {
         return Value{ .Number = .{ .value = value } };
     }
 
-    pub fn parseString(value: []u8) Value {
+    fn parseString(value: []u8) Value {
         return Value{ .String = .{ .value = value } };
+    }
+
+    fn parseArray(self: *Self) ParseError!Value {
+        var res = ArrayValue{};
+
+        while (self.lexer.next() catch return ParseError.Lexer) |tok| {
+            switch (tok) {
+                Token.RBracket => break,
+                Token.Comma => {},
+                else => {},
+            }
+        }
+
+        return Value{ .Array = res };
     }
 
     test "string" {
@@ -104,5 +134,17 @@ pub const Parser = struct {
         var parser = try Parser.init(arena.allocator(), input[0..input.len]);
 
         try std.testing.expect((try parser.parse()) == expected);
+    }
+
+    test "array" {
+        var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+        defer arena.deinit();
+
+        var input = "[1]".*;
+        var parser = try Parser.init(arena.allocator(), input[0..input.len]);
+
+        const a = parser.parse();
+
+        std.debug.print("{s}", .{@TypeOf(a)});
     }
 };
